@@ -13,7 +13,7 @@
   ],
   "tags": ["Unity 6.3", "C#", "Kinematic 이동 컨트롤러", "Animator 기반 FSM", "캐릭터 교대 & QTE", "중재자 기반 전투 처리", "ScriptableObject"],
   "links": {
-    "github": "https://github.com/chesherneko/2D-Action-Platformer",
+    "github": "https://github.com/chesherneko/Switch-Strike",
     "video": "https://www.youtube.com/watch?v=qtJYxDbJ-fQ",
     "extra": []
   },
