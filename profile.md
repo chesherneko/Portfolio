@@ -6,12 +6,12 @@
 
 ## 기본 정보
 
-- 이름: 홍길동
-- 영문 이름: Gildong Hong
+- 이름: 정태현
+- 영문 이름: Jung Taehyeon
 - 한 줄 정체성: 구조를 설명할 줄 아는 유니티 클라이언트 개발자
-- 이메일: you@example.com
-- GitHub: https://github.com/your-id
-- 기타 링크: 블로그 https://your-blog.example.com
+- 이메일: chesherneko@gmail.com
+- GitHub: https://github.com/chesherneko
+- 기타 링크:
 
 ## 자기소개
 
