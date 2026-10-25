@@ -26,7 +26,7 @@
           "project": "1-action-platformer"
         },
         {
-          "text": "보드 빌더로 칸 순서·종류를 `Board.json`에 저장하고 게임 시작 시 보드 생성",
+          "text": "보드 빌더로 칸 배치를 `Board.json`에 저장하고 게임 시작 시 보드 생성",
           "project": "2-Yggdrasil"
         }
       ]
@@ -43,7 +43,7 @@
           "project": "1-action-platformer"
         },
         {
-          "text": "제네릭 `DataTable<DTO, Def>`로 TSV 표 5개 읽기를 클래스 하나로 묶음",
+          "text": "제네릭 `DataTable<DTO, Def>`로 TSV 표 읽기를 하나로 통합",
           "project": "2-Yggdrasil"
         }
       ]
@@ -60,7 +60,7 @@
           "project": "1-action-platformer"
         },
         {
-          "text": "Strategy + Factory로 칸 효과 7종을 효과 클래스로 분리",
+          "text": "Strategy + Factory로 칸 효과 7종을 `ITileEffect` 클래스로 분리",
           "project": "2-Yggdrasil"
         }
       ]
