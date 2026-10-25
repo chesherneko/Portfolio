@@ -349,7 +349,13 @@
       const st = dlg.querySelector('.lb-stage');
       st.className = svg ? 'lb-stage lb-svg' : 'lb-stage';
       st.innerHTML = '';
-      if (svg) { const c = svg.cloneNode(true); c.removeAttribute('id'); c.style.maxWidth = 'none'; st.appendChild(c); }
+      if (svg) {
+        // Mermaid 스타일은 #<svg id> 아래로만 걸려 있어 id를 지우면 색이 빠짐(검은 상자) → 새 id로 바꾸고 스타일·화살표 참조도 같이 바꿈(id 중복 없음)
+        const oldId = svg.id, t = document.createElement('template');
+        t.innerHTML = oldId ? svg.outerHTML.split(oldId).join(`${oldId}-zoom`) : svg.outerHTML;
+        const c = t.content.firstElementChild;
+        c.style.maxWidth = 'none'; st.appendChild(c);
+      }
       else { const im = new Image(); im.src = src; im.alt = caption || ''; st.appendChild(im); }
       dlg.querySelector('.lb-cap').textContent = caption || '';
       dlg.showModal();
