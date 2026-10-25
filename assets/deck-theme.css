@@ -252,6 +252,7 @@ table.md-table img { max-height: 120px; max-width: 100%; height: auto; }   /* wi
 .fstep.res { background: #F3FBF6; border-color: #C3E6D2; }
 .flow.col .fstep { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 12px; align-items: start; padding: 11px 14px; }
 .flow.col .fstep .labelchip { justify-content: center; }
+.flow.col .fstep > p:only-child { grid-column: 1 / -1; }   /* 라벨 없는 단계: 86px 라벨 칸에 글이 갇혀 한 낱말씩 줄바꿈되지 않게 폭 전체 사용 */
 .scr-row { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 22px; }
 .pf-sizing .scr-row { align-items: stretch; }
 .pf-vband { margin: 0; padding: 12px 14px; border-left: 4px solid #B42318; background: #FDECEA; color: #7A1A12; font-size: 13px; line-height: 1.45; border-radius: 8px; min-width: 260px; }
