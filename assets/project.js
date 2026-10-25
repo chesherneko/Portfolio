@@ -110,7 +110,7 @@
   // ── 기술 문서 전문 ──────────────────────────────────
   const docSection = `
     <section class="section wrap" id="pf-doc">
-      ${sectionHead(nextNo(), '기술 문서 전문', esc(`src/${p.id}/${p.doc}`))}
+      ${sectionHead(nextNo(), '기술 문서 전문')}
       <div class="doc-layout">
         <details class="toc" id="toc" open><summary>목차</summary><div id="toc-links"></div></details>
         <article class="md" id="doc"><div class="loading">기술 문서를 불러오는 중…</div></article>
@@ -151,6 +151,26 @@
       doc.innerHTML = `<p style="color:#C0392B">기술 문서를 불러오지 못했습니다 (${esc(err.message)}).</p>`;
       return;
     }
+    // 한국어 문장 보정
+    //  - **「제목」**는 처럼 문장부호 뒤에 조사가 바로 붙으면 CommonMark 규칙상 굵게가 풀리므로 직접 처리
+    //  - Lv1~7 … Lv9~10 처럼 물결표 하나(~)는 범위 표시로 두고, ~~두 개~~만 취소선으로 처리
+    marked.use({
+      extensions: [{
+        name: 'strongKo', level: 'inline',
+        start(src) { const i = src.indexOf('**'); return i < 0 ? undefined : i; },
+        tokenizer(src) {
+          const m = /^\*\*(?=[^\s*])([\s\S]*?[^\s*])\*\*(?!\*)/.exec(src);
+          if (m) return { type: 'strongKo', raw: m[0], tokens: this.lexer.inlineTokens(m[1]) };
+        },
+        renderer(t) { return `<strong>${this.parser.parseInline(t.tokens)}</strong>`; },
+      }],
+      tokenizer: {
+        del(src) {
+          if (/^~(?!~)/.test(src)) return { type: 'text', raw: '~', text: '~' };
+          return false;
+        },
+      },
+    });
     doc.innerHTML = marked.parse(md, { gfm: true });
 
     // ① 상대경로(이미지·링크)를 src/<id>/ 기준으로
@@ -216,5 +236,50 @@
       });
     }, { rootMargin: '-80px 0px -70% 0px' });
     headings.filter((h) => links.has(h.id)).forEach((h) => io.observe(h));
+
+    // ⑦ 본문의 절 번호 참조 (4.5), (3.1과 같은 방식) 등을 해당 절로 가는 링크로
+    linkSectionRefs(headings);
+  }
+
+  function linkSectionRefs(headings) {
+    const byNo = new Map();
+    headings.forEach((h) => {
+      const m = /^(\d+\.\d+)\s/.exec(h.textContent.trim());
+      if (m && !byNo.has(m[1])) byNo.set(m[1], h.id);
+    });
+    if (!byNo.size) return;
+    const SKIP = 'a, code, pre, h1, h2, h3, h4, h5, h6, .mermaid, svg, #toc, .section-head';
+    // 괄호 안의 x.y 만 대상 — 뒤에 숫자·단위(초, 배속 등)가 붙으면 제외
+    const re = /(\(\s*|,\s*)(\d+\.\d+)(?=\s*[)\uACFC\uC640\uC758,]|\s+[\uAC00-\uD7A3])/g;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => (n.parentElement.closest(SKIP) || !/\d\.\d/.test(n.nodeValue))
+        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach((node) => {
+      const text = node.nodeValue;
+      let last = 0, hit = false;
+      const frag = document.createDocumentFragment();
+      text.replace(re, (all, pre, num, idx) => {
+        // 쉼표로 시작한 경우는 같은 괄호 안일 때만
+        if (pre[0] === ',' && text.lastIndexOf('(', idx) <= text.lastIndexOf(')', idx)) return all;
+        const id = byNo.get(num);
+        if (!id) return all;
+        const at = idx + pre.length;
+        frag.append(text.slice(last, at));
+        const a = document.createElement('a');
+        a.className = 'sec-ref';
+        a.href = `#${id}`;
+        a.textContent = num;
+        frag.append(a);
+        last = at + num.length;
+        hit = true;
+        return all;
+      });
+      if (!hit) return;
+      frag.append(text.slice(last));
+      node.replaceWith(frag);
+    });
   }
 })();

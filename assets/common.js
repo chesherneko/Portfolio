@@ -5,7 +5,9 @@ const PF = (() => {
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // 텍스트 필드: HTML 이스케이프 + `백틱` → <code>
-  const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+  // + **굵게** → <strong>
+  const inline = (s) => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(?=\S)(.+?)(?<=\S)\*\*/g, '<strong>$1</strong>');
 
   const isUrl = (u) => /^https?:\/\//i.test(u || '');
 
