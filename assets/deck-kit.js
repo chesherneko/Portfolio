@@ -717,7 +717,7 @@
     if (!deck) return [{ scene: null, type: 'no-deck', detail: 'mount 전' }];
     [...deck.children].forEach((e) => { if (!e.classList.contains('pf-scene')) out.push({ scene: null, type: 'foreign', detail: `${desc(e)} 장면 사이 이물질` }); });
     scenes.forEach((s, i) => { if (isPrint() && s.classList.contains('pf-skip')) return; sceneIssues(s).forEach((x) => out.push({ scene: i + 1, ...x })); });
-    document.querySelectorAll('dialog[open]').forEach((d) => out.push({ scene: null, type: 'dialog', detail: `${desc(d)} 열린 dialog` }));
+    document.querySelectorAll('dialog[open]:not(.pf-lightbox)').forEach((d) => out.push({ scene: null, type: 'dialog', detail: `${desc(d)} 열린 dialog` }));   // 그림 크게 보기(project-deck.js)는 사용자가 연 창이라 제외
     if (!isPrint()) out.push(...outsideDeck());               // 화면 매체에서만
     return out;
   }

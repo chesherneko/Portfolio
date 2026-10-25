@@ -218,6 +218,23 @@ table.kv td.role { color: var(--accent-ink); font-weight: 800; }
 .vbox[data-kind="image"] .vmedia img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .vbox[data-kind="mermaid"] .vmedia svg { width: 100% !important; height: 100% !important; max-width: none !important; display: block; }
 .vbox[data-kind="code"] .vmedia { display: block; background: var(--code-bg); border: 0; }
+/* 그림 크게 보기(project-deck.js 끝): 장면의 다이어그램·이미지에 확대 커서, 누르면 화면에 맞춰 크게 */
+.vbox[data-kind="mermaid"] .vmedia svg, .vbox[data-kind="image"] .vmedia img { cursor: zoom-in; }
+dialog.pf-lightbox { border: 0; padding: 0; margin: auto; background: transparent; max-width: 100vw; max-height: 100vh; overflow: visible; cursor: zoom-out; }
+dialog.pf-lightbox::backdrop { background: rgba(15, 18, 24, .82); }
+.pf-lightbox .lb-stage { width: 92vw; height: 82vh; display: flex; align-items: center; justify-content: center; }
+.pf-lightbox .lb-stage img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.pf-lightbox .lb-wrap { position: relative; }
+.pf-lightbox .lb-stage.lb-svg { --z: 1; display: flex; justify-content: flex-start; align-items: flex-start; overflow: auto; overscroll-behavior: contain; background: #fff; border-radius: 12px; padding: 20px; cursor: default; }
+/* 확대(--z, 1~1.5): 흰 상자 안쪽 크기의 z배. margin:auto로 가운데(넘칠 때 왼쪽·위가 잘리지 않게 justify-content 대신) */
+.pf-lightbox .lb-stage.lb-svg svg { flex: none; margin: auto; width: calc(100% * var(--z)) !important; height: calc(100% * var(--z)) !important; max-width: none !important; display: block; }
+.pf-lightbox .lb-zoom { position: absolute; right: 14px; bottom: 14px; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+                        background: rgba(255, 255, 255, .94); border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0, 0, 0, .12); cursor: default; }
+.pf-lightbox .lb-zoom[hidden] { display: none; }
+.pf-lightbox .lb-zoom input { width: 120px; accent-color: var(--accent); cursor: pointer; }
+.pf-lightbox .lb-zoom output { min-width: 3.2em; text-align: right; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: #111; }
+.pf-lightbox .lb-cap { margin: 10px auto 0; max-width: 92vw; text-align: center; color: #fff; font-size: 14px; }
+.pf-lightbox .lb-close { display: block; margin: 8px auto 0; font: inherit; font-size: 13px; font-weight: 700; padding: 6px 14px; border-radius: 999px; border: 0; background: #fff; color: #111; cursor: pointer; }
 .vbox[data-kind="table"] .vmedia { display: block; background: transparent; border: 0; border-radius: 0; }
 .fit-in { transform-origin: 0 0; }
 .fit-in pre { margin: 0 !important; padding: 14px 18px !important; background: transparent !important; }

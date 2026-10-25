@@ -413,3 +413,103 @@
     return PF.guard(make(), PFScene.refUrl('end'), info.overflow);
   }
 })();
+
+// 그림 크게 보기 — 장면 안의 다이어그램·이미지를 누르면 화면에 맞춰 크게(같은 페이지 dialog). 누르거나 Esc로 닫음
+//   dialog가 열려 있는 동안 덱의 키·휠 넘기기는 deck-kit.js가 쉬고, 화면 감사(outside-deck)는 .pf-lightbox를 빼고 봅니다. 인쇄에서는 dialog를 숨김
+//   capture 단계에서 받아 preventDefault → 휴대폰 탭이 장면 넘기기(onDeckClick)로 가지 않음. 개요 격자(dialog) 안의 축소본은 대상 아님
+(() => {
+  const deck = document.getElementById('deck');
+  if (!deck) return;
+  const TARGET = '.vbox[data-kind="mermaid"] .vmedia svg, .vbox[data-kind="image"] .vmedia img';
+  let dlg = null;
+  const open = (el, caption) => {
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.className = 'pf-lightbox';
+      dlg.setAttribute('aria-label', '크게 보기');
+      // 다이어그램만: 오른쪽 아래 확대 슬라이더(100~150%). 크면 흰 상자 안에서 스크롤
+      dlg.innerHTML = '<div class="lb-wrap"><div class="lb-stage"></div>' +
+        '<label class="lb-zoom" hidden><span class="pf-sr-only">확대</span><input type="range" min="100" max="150" step="5" value="100"><output>100%</output></label></div>' +
+        '<p class="lb-cap"></p><button type="button" class="lb-close">닫기 (Esc)</button>';
+      // 닫기: 바깥(어두운 바탕)·닫기 단추·Esc. 다이어그램 상자 안과 슬라이더를 누를 때는 닫지 않음(스크롤·확대 조작)
+      dlg.addEventListener('click', (e) => { if (!e.target.closest('.lb-stage.lb-svg, .lb-zoom')) dlg.close(); });
+      const range = dlg.querySelector('.lb-zoom input');
+      range.addEventListener('input', () => {
+        // 화면 가운데에 보이던 다이어그램 지점이 확대 뒤에도 가운데에 오도록 스크롤을 맞춤(왼쪽 위 기준으로 밀려 보이지 않게)
+        const st = dlg.querySelector('.lb-stage'), svg = st.querySelector('svg');
+        const s = st.getBoundingClientRect(), cx = s.left + st.clientLeft + st.clientWidth / 2, cy = s.top + st.clientTop + st.clientHeight / 2;
+        const a = svg.getBoundingClientRect();
+        const fx = Math.min(1, Math.max(0, (cx - a.left) / a.width)), fy = Math.min(1, Math.max(0, (cy - a.top) / a.height));
+        st.style.setProperty('--z', range.value / 100);
+        dlg.querySelector('.lb-zoom output').textContent = `${range.value}%`;
+        const b = svg.getBoundingClientRect();
+        st.scrollLeft += b.left + fx * b.width - cx;
+        st.scrollTop += b.top + fy * b.height - cy;
+      });
+      // 휠 가운데 단추 끌기: 브라우저 자동 스크롤 대신 확대한 다이어그램을 끌어서 옮김(이미지는 막기만)
+      let pan = null;
+      dlg.addEventListener('pointerdown', (e) => {
+        if (e.button !== 1) return;
+        e.preventDefault();
+        const box = dlg.querySelector('.lb-stage.lb-svg');
+        if (!box) return;
+        pan = { box, x: e.clientX, y: e.clientY, l: box.scrollLeft, t: box.scrollTop };
+        box.setPointerCapture?.(e.pointerId);
+      });
+      dlg.addEventListener('pointermove', (e) => { if (pan) { pan.box.scrollLeft = pan.l - (e.clientX - pan.x); pan.box.scrollTop = pan.t - (e.clientY - pan.y); } });
+      const endPan = () => { pan = null; };
+      dlg.addEventListener('pointerup', endPan); dlg.addEventListener('pointercancel', endPan);
+      // 크게 보기 뒤의 페이지(특히 "한 번에 보기")가 휠·키로 함께 스크롤되지 않게: 다이어그램 상자 안의 휠은 상자만(CSS overscroll-behavior: contain),
+      //   그 밖(이미지·바탕·스크롤할 것이 없는 상자)의 휠과 페이지 스크롤 키는 막음. 슬라이더의 ←/→는 그대로
+      dlg.addEventListener('wheel', (e) => {
+        const box = e.target.closest?.('.lb-stage.lb-svg');
+        if (e.ctrlKey || (box && (box.scrollHeight > box.clientHeight + 1 || box.scrollWidth > box.clientWidth + 1))) return;
+        e.preventDefault();
+      }, { passive: false });
+      dlg.addEventListener('keydown', (e) => {
+        if (!/^(ArrowUp|ArrowDown|ArrowLeft|ArrowRight|PageUp|PageDown|Home|End| )$/.test(e.key) || e.target.matches?.('input[type="range"]')) return;
+        e.preventDefault();
+      });
+      dlg.addEventListener('mousedown', (e) => { if (e.button === 1) e.preventDefault(); });   // 자동 스크롤 모드 끄기
+      dlg.addEventListener('auxclick', (e) => { if (e.button === 1) e.preventDefault(); });
+      // 닫은 직후: 크게 보기 안에서 굴리던 휠·트랙패드(관성 포함)가 이어져 덱이 넘어가지 않도록, 휠이 250ms 멈출 때까지 덱에 전하지 않음
+      //   (close 이벤트는 늦게 오므로 쓰지 않음: 열린 동안 굴린 휠마다 조용한 구간을 늘려 두고, 닫힌 뒤 그 구간 안에 이어지는 휠은 삼키며 다시 늘림)
+      let quietUntil = 0;
+      addEventListener('wheel', (e) => {
+        const now = performance.now();
+        if (dlg.open) { quietUntil = now + 250; return; }
+        if (now > quietUntil) return;
+        quietUntil = now + 250;
+        e.stopPropagation();
+      }, { capture: true, passive: true });
+      document.body.appendChild(dlg);
+    }
+    const st = dlg.querySelector('.lb-stage');
+    const zoom = dlg.querySelector('.lb-zoom');
+    st.replaceChildren();
+    st.style.setProperty('--z', 1);
+    zoom.querySelector('input').value = 100; zoom.querySelector('output').textContent = '100%';
+    if (el.tagName.toLowerCase() === 'svg') {
+      // Mermaid 스타일은 #<svg id> 아래로만 걸려 있어 id를 지우면 색이 빠짐 → 새 id로 바꾸고 스타일·화살표 참조도 같이 바꿈
+      const t = document.createElement('template');
+      t.innerHTML = el.id ? el.outerHTML.split(el.id).join(`${el.id}-zoom`) : el.outerHTML;
+      st.appendChild(t.content.firstElementChild);
+      st.className = 'lb-stage lb-svg';
+      zoom.hidden = false;
+    } else {
+      const im = new Image(); im.src = el.currentSrc || el.src; im.alt = el.alt || '';
+      st.appendChild(im);
+      st.className = 'lb-stage';
+      zoom.hidden = true;
+    }
+    dlg.querySelector('.lb-cap').textContent = caption || '';
+    dlg.showModal();
+  };
+  document.addEventListener('click', (e) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const el = e.target.closest?.(TARGET);
+    if (!el || !deck.contains(el) || el.closest('dialog')) return;
+    e.preventDefault(); e.stopPropagation();
+    open(el, el.closest('.vbox')?.querySelector('.cap')?.textContent.trim());
+  }, true);
+})();
