@@ -19,8 +19,8 @@
   --radius: 14px;
   /* 공통 틀: 목차 260 · 간격 40 · 본문 칸 · 간격 40 · 레일 300(≥1800px), 바깥 패딩 clamp(16px, 2.5vw, 48px) */
   --toc-w: 260px; --rail-w: 300px; --gap: 40px; --pad: clamp(16px, 2.5vw, 48px);
-  /* ① 가운데: 최대 폭 1840, 글줄 40rem(rem인 이유: em이면 h2에서 요소마다 다르게 풀림), 도식·그림 최대 1200 */
-  --measure: 40rem; --page-max: 1840px; --fig-max: 1200px;
+  /* ① 가운데: 최대 폭 1840, 본문 칸 50rem — 글·코드·표·도식이 같은 폭(rem인 이유: em이면 h2에서 요소마다 다르게 풀림). 예전 글줄 40rem·도식 최대 1200 */
+  --measure: 50rem; --page-max: 1840px; --fig-max: 1200px;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -198,14 +198,16 @@ dialog.lightbox::backdrop { background: rgba(10, 11, 14, .82); }
             display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; color: var(--faint); font-size: 13px; }
 .doc-foot a { color: var(--muted); text-decoration: none; }
 
-/* ── ① 가운데 정렬 폭 규칙: 글줄 40rem을 본문 칸 가운데에, 코드·표는 글줄 왼쪽에서 오른쪽으로만, 도식·그림은 가운데 최대 1200 ── */
+/* ── ① 가운데 정렬 폭 규칙: 글·코드·표·도식이 모두 같은 칸(--measure)을 본문 칸 가운데에 써서 좌우 끝을 맞춤 ──
+     (예전: 글줄 40rem 가운데 · 코드·표는 글줄 왼쪽에서 오른쪽으로만 · 도식·그림은 가운데 최대 1200 — 폭이 제각각이라 바꿈)
+     표는 칸 폭까지 늘려 오른쪽 끝을 맞추고, 칸보다 넓은 표·코드는 그 안에서 가로 스크롤. 그림은 원래 크기가 작으면 가운데 */
 .doc-intro, .md > * { max-width: min(var(--measure), 100%); }
-.md > :is(pre, .table-wrap) { width: max-content; min-width: min(var(--measure), 100%); max-width: 100%; overflow-x: auto; }
-.md > :is(.mmd, .pf-figure) { width: fit-content; max-width: min(100%, var(--fig-max)); }
+.doc-intro, .md > :not(.print-only) { margin-inline: auto; }   /* :not()은 구체성을 올려 .md p·.md h2·.md .pf-figure의 margin: … 0보다 이기게 함 */
+.md > :is(pre, .table-wrap, .mmd) { width: min(var(--measure), 100%); }
+.md > :is(pre, .table-wrap) { overflow-x: auto; }
+.md > .table-wrap > table { width: 100%; }
+.md > .pf-figure { width: fit-content; }
 .md > .print-only { max-width: none; }
-.doc-intro, .md > :not(pre, .table-wrap, .mmd, .pf-figure) { margin-inline: auto; }
-.md > :is(pre, .table-wrap) { margin-left: max(0px, (100% - var(--measure)) / 2); max-width: calc(100% - max(0px, (100% - var(--measure)) / 2)); }
-.md > :is(.mmd, .pf-figure) { margin-inline: auto; }
 
 /* ── 반응형 (화면에만; 인쇄 폭에서 켜지지 않게 screen으로 한정) ── */
 @media screen and (max-width: 1799.98px) {
