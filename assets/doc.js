@@ -134,6 +134,9 @@
       if (img) para.classList.add('pf-figure');
     });
 
+    // ⑥-1 본문의 절 번호 참조 (4.5), (3.1과 같은 방식) 등을 해당 절로 가는 링크로
+    linkSectionRefs(doc, headings);
+
     // ⑦ Mermaid (theme default, securityLevel loose). 글꼴을 먼저 받아 글자 폭을 맞춤
     let n = 0;
     const figs = [];
@@ -242,6 +245,48 @@
     const pres = [...doc.querySelectorAll('pre')].filter((x) => !x.closest('.mmd-src'));
     pres.forEach((pre) => { fade(pre); pre.addEventListener('scroll', () => fade(pre), { passive: true }); });
     addEventListener('resize', () => pres.forEach(fade));
+  }
+
+  function linkSectionRefs(doc, headings) {
+    const byNo = new Map();
+    headings.forEach((h) => {
+      const m = /^(\d+\.\d+)\s/.exec(htext(h));
+      if (m && !byNo.has(m[1])) byNo.set(m[1], h.id);
+    });
+    if (!byNo.size) return;
+    const SKIP = 'a, code, pre, h1, h2, h3, h4, h5, h6, .mermaid, svg';
+    // 괄호 안의 x.y 만 대상 — 뒤에 숫자·단위(초, 배속 등)가 붙으면 제외
+    const re = /(\(\s*|,\s*)(\d+\.\d+)(?=\s*[)과와의,]|\s+[가-힣])/g;
+    const walker = document.createTreeWalker(doc, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => (n.parentElement.closest(SKIP) || !/\d\.\d/.test(n.nodeValue))
+        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach((node) => {
+      const text = node.nodeValue;
+      let last = 0, hit = false;
+      const frag = document.createDocumentFragment();
+      text.replace(re, (all, pre, num, idx) => {
+        // 쉼표로 시작한 경우는 같은 괄호 안일 때만
+        if (pre[0] === ',' && text.lastIndexOf('(', idx) <= text.lastIndexOf(')', idx)) return all;
+        const hid = byNo.get(num);
+        if (!hid) return all;
+        const at = idx + pre.length;
+        frag.append(text.slice(last, at));
+        const a = document.createElement('a');
+        a.className = 'sec-ref';
+        a.href = `#${hid}`;
+        a.textContent = num;
+        frag.append(a);
+        last = at + num.length;
+        hit = true;
+        return all;
+      });
+      if (!hit) return;
+      frag.append(text.slice(last));
+      node.replaceWith(frag);
+    });
   }
 
   function classifyMdLink(a, isRelative, decode) {

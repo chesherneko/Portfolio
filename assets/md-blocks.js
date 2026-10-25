@@ -7,10 +7,20 @@
   const isRelative = (u) => u && !/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(u);
   const decode = (u) => { try { return decodeURI(u); } catch (_) { return u; } };
 
-  // 물결표 보정: gfm은 ~하나~도 취소선으로 읽어 "Lv1~7 … Lv9~10"의 사이가 지워진 것처럼 보임
-  //   → ~ 하나는 범위 표시 글자로 두고, ~~두 개~~만 취소선. marked는 전역이라 PF.md.parse(상세 문서·발표 덱)와 PF.headingsOf 모두에 적용
+  // 한국어 문장 보정 (marked는 전역이라 PF.md.parse(상세 문서·발표 덱)와 PF.headingsOf 모두에 적용)
+  //  - 굵게: **「제목」**는 처럼 닫는 ** 앞이 문장부호이고 뒤에 조사가 바로 붙으면 CommonMark 규칙상 굵게가 풀려 ** 가 그대로 보임 → 직접 처리
+  //  - 물결표: gfm은 ~하나~도 취소선으로 읽어 "Lv1~7 … Lv9~10"의 사이가 지워진 것처럼 보임 → ~ 하나는 범위 표시 글자로 두고, ~~두 개~~만 취소선
   if (window.marked) {
     marked.use({
+      extensions: [{
+        name: 'strongKo', level: 'inline',
+        start(src) { const i = src.indexOf('**'); return i < 0 ? undefined : i; },
+        tokenizer(src) {
+          const m = /^\*\*(?=[^\s*])([\s\S]*?[^\s*])\*\*(?!\*)/.exec(src);
+          if (m) return { type: 'strongKo', raw: m[0], tokens: this.lexer.inlineTokens(m[1]) };
+        },
+        renderer(t) { return `<strong>${this.parser.parseInline(t.tokens)}</strong>`; },
+      }],
       tokenizer: {
         del(src) {
           if (/^~(?!~)/.test(src)) return { type: 'text', raw: '~', text: '~' };
