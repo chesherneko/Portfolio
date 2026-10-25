@@ -7,6 +7,19 @@
   const isRelative = (u) => u && !/^([a-z][a-z0-9+.-]*:|#|\/)/i.test(u);
   const decode = (u) => { try { return decodeURI(u); } catch (_) { return u; } };
 
+  // 물결표 보정: gfm은 ~하나~도 취소선으로 읽어 "Lv1~7 … Lv9~10"의 사이가 지워진 것처럼 보임
+  //   → ~ 하나는 범위 표시 글자로 두고, ~~두 개~~만 취소선. marked는 전역이라 PF.md.parse(상세 문서·발표 덱)와 PF.headingsOf 모두에 적용
+  if (window.marked) {
+    marked.use({
+      tokenizer: {
+        del(src) {
+          if (/^~(?!~)/.test(src)) return { type: 'text', raw: '~', text: '~' };
+          return false; // ~~ 는 기본 취소선 규칙으로
+        },
+      },
+    });
+  }
+
   // md → { frag, headings: [{ el, level, text, id, parents }] }. 상대경로는 src/<폴더>/… 로 바꾸고 원래 값은 data-md-src에 둠
   function parse(md, id) {
     const tpl = document.createElement('template');
