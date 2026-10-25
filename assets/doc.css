@@ -145,7 +145,6 @@ code { font-family: var(--mono); font-size: .88em; background: var(--accent-soft
 .md pre { margin: 16px 0; border-radius: 12px; overflow: auto; background: var(--code-bg); }
 .md pre code, .md pre code.hljs { display: block; width: max-content; min-width: 100%; padding: 18px 20px; font-size: 13.5px; line-height: 1.65;
                                   background: transparent; color: #E6E6E6; word-break: normal; white-space: pre; overflow: visible; border-radius: 0; }
-.md pre.fade-r { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), rgba(0,0,0,.25)); mask-image: linear-gradient(to right, #000 calc(100% - 56px), rgba(0,0,0,.25)); }
 
 .table-wrap { margin: 18px 0; overflow-x: auto; }
 .md table { display: table; border-collapse: collapse; font-size: 14.5px; }
@@ -263,8 +262,7 @@ dialog.lightbox::backdrop { background: rgba(10, 11, 14, .82); }
   .md > :is(.mmd, .pf-figure) { width: fit-content !important; }
   pre, .table-wrap, .mmd, .mermaid, .pf-figure, blockquote, tr, img { break-inside: avoid; }
   h2, h3, h4 { break-after: avoid; }
-  /* .fade-r(화면용 흐림 mask)이 인쇄에 남으면 코드가 그림으로 바뀌고 글자가 두 번 들어감(시안 검증에서 발견) → 인쇄에서 mask를 끔 */
-  .md pre, .md pre.fade-r { white-space: pre-wrap; overflow: visible; background: #F6F8FA; border: 1px solid #D8DEE4; -webkit-mask-image: none; mask-image: none; }
+  .md pre { white-space: pre-wrap; overflow: visible; background: #F6F8FA; border: 1px solid #D8DEE4; -webkit-mask-image: none; mask-image: none; }
   .md pre code, .md pre code.hljs { white-space: pre-wrap; word-break: break-all; width: auto; min-width: 0; font-size: 8.5pt; color: #24292E; padding: 8pt 10pt; }
   /* 화면 규칙(.md > :is(pre, .table-wrap)·.table-wrap의 overflow-x:auto)과 구체성이 같거나 높고 뒤에 와서 이김 — 목록·인용 안의 표도 */
   .md > :is(pre, .table-wrap), .md .table-wrap { overflow: visible; }

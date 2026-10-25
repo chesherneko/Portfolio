@@ -189,6 +189,13 @@
       mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose', fontFamily: 'Pretendard, sans-serif' });
       try { await mermaid.run({ nodes: doc.querySelectorAll('.mermaid') }); }
       catch (err) { console.warn('[doc] Mermaid 렌더 오류:', err); }
+      // 첫 렌더에서 드물게 오류 없이 그림이 빠지는 경우가 있음(원문 글자 그대로 남음, 다시 그리면 정상) → 빠진 것만 한 번 더
+      const missed = [...doc.querySelectorAll('.mermaid')].filter((m) => !m.querySelector('svg'));
+      if (missed.length) {
+        missed.forEach((m) => m.removeAttribute('data-processed'));
+        try { await mermaid.run({ nodes: missed }); }
+        catch (err) { console.warn('[doc] Mermaid 다시 그리기 오류:', err); }
+      }
     }
     figs.forEach((fig) => {
       const svg = fig.querySelector('.mermaid svg');
@@ -240,11 +247,7 @@
       const zb = e.target.closest('.mmd-zoom');
       if (zb) { const svg = zb.closest('.mmd').querySelector('.mermaid svg'); if (svg) zoom({ svg, caption: zb.closest('.mmd').dataset.label }); }
     });
-    // 코드 오른쪽 흐림 표시: 가로로 더 있을 때만
-    const fade = (pre) => pre.classList.toggle('fade-r', pre.scrollWidth > pre.clientWidth + 1 && pre.scrollLeft + pre.clientWidth < pre.scrollWidth - 1);
-    const pres = [...doc.querySelectorAll('pre')].filter((x) => !x.closest('.mmd-src'));
-    pres.forEach((pre) => { fade(pre); pre.addEventListener('scroll', () => fade(pre), { passive: true }); });
-    addEventListener('resize', () => pres.forEach(fade));
+    // (코드 오른쪽 흐림 표시 .fade-r는 없앰 — 가로 스크롤 막대만으로 알림)
   }
 
   function linkSectionRefs(doc, headings) {
